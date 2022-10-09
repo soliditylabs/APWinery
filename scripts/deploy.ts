@@ -10,24 +10,43 @@ async function main() {
   await apWinery.functions.deposit({ value: ethers.utils.parseEther("1") });
 
   const ptBalanceAfterDeposit = await apWinery.functions.getPTBalance();
-  console.log(`PT Balance After Deposit ${ptBalanceAfterDeposit}`);
+  console.log(
+    `PT Balance After Deposit ${ethers.utils.formatEther(
+      ptBalanceAfterDeposit.toString()
+    )}`
+  );
 
   const fytBalanceAfterDeposit =
     await apWinery.functions.getCurrentPeriodTotalFYTBalance();
-  console.log(`FYT Balance After Deposit ${fytBalanceAfterDeposit}`);
+  console.log(
+    `FYT Balance After Deposit ${ethers.utils.formatEther(
+      fytBalanceAfterDeposit.toString()
+    )}`
+  );
+
+  const unrealizedYield = await apWinery.functions.getUnrealizedYield();
+  console.log(
+    `Unrealized Yield ${ethers.utils.formatEther(unrealizedYield.toString())}`
+  );
 
   await apWinery.functions.withdraw();
 
   const ptBalanceAfterWithdraw = await apWinery.functions.getPTBalance();
-  console.log(`PT Balance After Withdraw ${ptBalanceAfterWithdraw}`);
+  console.log(
+    `PT Balance After Withdraw ${ethers.utils.formatEther(
+      ptBalanceAfterWithdraw.toString()
+    )}`
+  );
 
   const fytBalanceAfterWithdraw =
     await apWinery.functions.getCurrentPeriodTotalFYTBalance();
-  console.log(`FYT Balance After Withdraw ${fytBalanceAfterWithdraw}`);
+  console.log(
+    `FYT Balance After Withdraw ${ethers.utils.formatEther(
+      fytBalanceAfterWithdraw.toString()
+    )}`
+  );
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

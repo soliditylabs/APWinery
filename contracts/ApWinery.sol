@@ -103,8 +103,9 @@ contract ApWinery is VRFV2WrapperConsumerBase {
     }
 
     function getUnrealizedYield() public view returns (uint256) {
-        // return getPTBalance() * LIDO_FUTURE_VAULT.getUnrealisedYieldPerAPWIBT();
-        return getPTBalance() * LIDO_FUTURE_VAULT.getUnrealisedYieldPerPT();
+        return
+            (getPTBalance() * LIDO_FUTURE_VAULT.getUnrealisedYieldPerPT()) /
+            1 ether;
     }
 
     function getCurrentFYT() public view returns (IERC20) {
