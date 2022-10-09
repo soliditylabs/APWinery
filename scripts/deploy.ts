@@ -9,11 +9,21 @@ async function main() {
 
   await apWinery.functions.deposit({ value: ethers.utils.parseEther("1") });
 
-  const ptBalance = await apWinery.functions.getPTBalance();
-  console.log(`PT Balance ${ptBalance}`);
+  const ptBalanceAfterDeposit = await apWinery.functions.getPTBalance();
+  console.log(`PT Balance After Deposit ${ptBalanceAfterDeposit}`);
 
-  const fytBalance = await apWinery.functions.getCurrentPeriodTotalFYTBalance();
-  console.log(`FYT Balance ${fytBalance}`);
+  const fytBalanceAfterDeposit =
+    await apWinery.functions.getCurrentPeriodTotalFYTBalance();
+  console.log(`FYT Balance After Deposit ${fytBalanceAfterDeposit}`);
+
+  await apWinery.functions.withdraw();
+
+  const ptBalanceAfterWithdraw = await apWinery.functions.getPTBalance();
+  console.log(`PT Balance After Withdraw ${ptBalanceAfterWithdraw}`);
+
+  const fytBalanceAfterWithdraw =
+    await apWinery.functions.getCurrentPeriodTotalFYTBalance();
+  console.log(`FYT Balance After Withdraw ${fytBalanceAfterWithdraw}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -5,6 +5,8 @@ import "./interfaces/IFutureVault.sol";
 import "./interfaces/IFutureWallet.sol";
 import "./interfaces/IController.sol";
 
+import "@chainlink/contracts/src/v0.8/VRFV2WrapperConsumerBase.sol";
+
 import "hardhat/console.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -20,7 +22,10 @@ IFutureWallet constant LIDO_FUTURE_WALLET = IFutureWallet(
     0xb9aF29F981B4A69De421f5d8dA46c2C7c473c67c
 );
 
-contract ApWinery {
+address constant LINK_ADDRESS = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
+address constant LINK_WRAPPER_ADDRESS = 0x5A861794B927983406fCE1D062e00b9368d97Df6;
+
+contract ApWinery is VRFV2WrapperConsumerBase {
     using SafeERC20 for IERC20;
 
     mapping(address => uint256) public userDeposits;
@@ -31,7 +36,10 @@ contract ApWinery {
 
     mapping(address => uint256) private userIndexInArray;
 
-    constructor() {
+    uint256 private lastRandomnessRequestId;
+    bool private hasPendingRandomness;
+
+    constructor() VRFV2WrapperConsumerBase(LINK_ADDRESS, LINK_WRAPPER_ADDRESS) {
         LIDO_IBT.safeApprove(address(CONTROLLER), type(uint256).max);
         LIDO_PT.safeApprove(address(CONTROLLER), type(uint256).max);
     }
@@ -45,6 +53,8 @@ contract ApWinery {
     }
 
     modifier noPendingLotteries() {
+        require(!hasPendingRandomness, "HAS_PENDING_RANDOMNESS");
+
         bool isFirstPeriod = lastLotteryRunPeriodIndex == 0;
         if (isFirstPeriod) {
             firstPeriodIndex = LIDO_FUTURE_VAULT.getCurrentPeriodIndex();
@@ -140,6 +150,8 @@ contract ApWinery {
     }
 
     function runLottery() external {
+        require(!hasPendingRandomness, "HAS_PENDING_RANDOMNESS");
+
         bool isFirstPeriod = lastLotteryRunPeriodIndex == 0;
         if (isFirstPeriod) {
             lastLotteryRunPeriodIndex = firstPeriodIndex;
@@ -148,16 +160,23 @@ contract ApWinery {
         }
 
         LIDO_FUTURE_WALLET.redeemYield(lastLotteryRunPeriodIndex);
+        lastRandomnessRequestId = requestRandomness(100000, 3, 1);
+    }
 
-        uint256 randomness = _getRandomness();
+    // additionally may use new RANDOM opcode and/or once possible drand
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
+        internal
+        override
+    {
+        require(lastRandomnessRequestId == requestId, "REQUEST_NOT_FOUND");
+
+        uint256 randomness = randomWords[0];
+
         uint256 winnerIndex = randomness % participants.length;
         address winner = participants[winnerIndex];
 
         LIDO_IBT.safeTransfer(winner, LIDO_IBT.balanceOf(address(this)));
-    }
 
-    // TODO get random number from Chainlink VRF, RANDOM opcode and/or drand
-    function _getRandomness() private view returns (uint256) {
-        return uint256(blockhash(block.number - 1));
+        hasPendingRandomness = false;
     }
 }
