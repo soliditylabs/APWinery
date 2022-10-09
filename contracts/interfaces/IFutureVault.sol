@@ -114,6 +114,8 @@ interface IFutureVault {
      */
     function getUnrealisedYieldPerAPWIBT() external view returns (uint256);
 
+    function getUnrealisedYieldPerPT() external view returns (uint256);
+
     /**
      * @notice Getter for the number of apwibt that can be minted for an amoumt deposited now
      * @param _amount the amount to of IBT to deposit
