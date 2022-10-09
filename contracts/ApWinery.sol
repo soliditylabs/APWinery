@@ -29,12 +29,12 @@ contract ApWinery is VRFV2WrapperConsumerBase {
     using SafeERC20 for IERC20;
 
     mapping(address => uint256) public userDeposits;
-    address[] public participants;
+    address[] public tickets;
 
     uint256 public firstPeriodIndex;
     uint256 public lastLotteryRunPeriodIndex;
 
-    mapping(address => uint256) private userIndexInArray;
+    mapping(address => uint256[]) private userIndicesInArray;
 
     uint256 private lastRandomnessRequestId;
     bool private hasPendingRandomness;
@@ -87,11 +87,10 @@ contract ApWinery is VRFV2WrapperConsumerBase {
         uint256 depositedPT = ptBalanceAfterDeposit - ptBalanceBeforeDeposit;
 
         userDeposits[msg.sender] += depositedPT;
-
-        userIndexInArray[msg.sender] = participants.length;
+        userIndicesInArray[msg.sender].push(tickets.length);
 
         for (uint256 i = 0; 0.1 ether * i < msg.value; i++) {
-            participants.push(msg.sender);
+            tickets.push(msg.sender);
         }
     }
 
@@ -130,11 +129,15 @@ contract ApWinery is VRFV2WrapperConsumerBase {
 
         CONTROLLER.withdraw(address(LIDO_FUTURE_VAULT), amountToWithdraw);
 
-        _removeAddressFromArray(
-            participants,
-            msg.sender,
-            userIndexInArray[msg.sender]
-        );
+        for (uint256 i = 0; i < userIndicesInArray[msg.sender].length; i++) {
+            _removeAddressFromArray(
+                tickets,
+                msg.sender,
+                userIndicesInArray[msg.sender][i]
+            );
+        }
+
+        delete userIndicesInArray[msg.sender];
     }
 
     function _removeAddressFromArray(
@@ -168,7 +171,7 @@ contract ApWinery is VRFV2WrapperConsumerBase {
         lastRandomnessRequestId = requestRandomness(100000, 3, 1);
     }
 
-    // additionally may use new RANDOM opcode and/or once possible drand
+    // additionally may use new RANDOM opcode and/or once possible drand beacon
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
         internal
         override
@@ -177,8 +180,8 @@ contract ApWinery is VRFV2WrapperConsumerBase {
 
         uint256 randomness = randomWords[0];
 
-        uint256 winnerIndex = randomness % participants.length;
-        address winner = participants[winnerIndex];
+        uint256 winnerIndex = randomness % tickets.length;
+        address winner = tickets[winnerIndex];
 
         LIDO_IBT.safeTransfer(winner, LIDO_IBT.balanceOf(address(this)));
 
