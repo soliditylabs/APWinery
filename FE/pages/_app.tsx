@@ -45,7 +45,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     <WagmiConfig client={wagmiClient}>
       <RainbowKitProvider chains={chains}>
         <ChakraProvider>
-        <Component {...pageProps} provider={provider} />
+          <Component {...pageProps} provider={provider} />
         </ChakraProvider>
       </RainbowKitProvider>
     </WagmiConfig>
