@@ -16,7 +16,7 @@ const Home: NextPage = (props) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        {/* <ConnectButton accountStatus="address" chainStatus="icon" /> */}
+        <ConnectButton accountStatus="address" chainStatus="icon" />
         <h1 className={styles.title}>
           Welcome to APWinery
         </h1>
